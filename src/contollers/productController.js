@@ -1,6 +1,8 @@
 const Product = require("../models/schemas/Product");
 const slugify = require("slugify");
 const { COMMON_NOTIFICATIONS } = require("../constants/commonConstants");
+const { uploadToCloudinary } = require("../middlewares/cloudinary/cloudinary");
+const fs = require("fs");
 
 exports.addProduct = async (req, res) => {
   const productObj = {
@@ -11,6 +13,27 @@ exports.addProduct = async (req, res) => {
       : slugify(req.body.name),
     createdBy: req.user._id,
   };
+
+  const productImageurls = [];
+  const productImages = req.files;
+
+  if (productImages) {
+    for (const file of productImages) {
+      const { path } = file;
+      const result = await uploadToCloudinary(path, path);
+
+      /* TODO if one upload fails remove other uploads too */
+      if (!result.isSuccess) {
+        return res
+          .status(500)
+          .send({ isSuccess: false, message: "product upload failed." });
+      }
+      productImageurls.push({ imgUrl: result.url, cloudinaryImagePath: path });
+    }
+    fs.rmSync("uploads/productImages", { recursive: true, force: true });
+    productObj.productImages = productImageurls;
+  }
+
   const product = new Product(productObj);
   try {
     const newProduct = await product.save();

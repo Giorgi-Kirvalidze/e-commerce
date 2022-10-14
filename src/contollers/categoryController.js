@@ -55,11 +55,19 @@ exports.addCategory = async (req, res) => {
       const cloudinaryImagePath = locaFilePath;
       const result = await uploadToCloudinary(
         locaFilePath,
-        cloudinaryImagePath,
-        CAREGORY_NOTIFICATIONS.FILE_UPLOADS.CATEGORY_IMAGE_LOCAL_FOLDER_PATH
+        cloudinaryImagePath
       );
+      if (!result.isSuccess) {
+        return res
+          .status(500)
+          .send({ isSuccess: false, message: "category image upload failed." });
+      }
       categoryObj.cloudinaryImagePath = locaFilePath;
       categoryObj.categoryImage = result.url;
+      fs.rmSync(
+        CAREGORY_NOTIFICATIONS.FILE_UPLOADS.CATEGORY_IMAGE_LOCAL_FOLDER_PATH,
+        { recursive: true, force: true }
+      );
     }
     const category = new Category(categoryObj);
     const newCategory = await category.save();
@@ -105,8 +113,16 @@ exports.updateCategory = async (req, res) => {
     if (req.file) {
       const result = await uploadToCloudinary(
         req.file.path,
-        category.cloudinaryImagePath,
-        CAREGORY_NOTIFICATIONS.FILE_UPLOADS.CATEGORY_IMAGE_LOCAL_FOLDER_PATH
+        category.cloudinaryImagePath
+      );
+      if (!result.isSuccess) {
+        return res
+          .status(500)
+          .send({ isSuccess: false, message: "category image upload failed." });
+      }
+      fs.rmSync(
+        CAREGORY_NOTIFICATIONS.FILE_UPLOADS.CATEGORY_IMAGE_LOCAL_FOLDER_PATH,
+        { recursive: true, force: true }
       );
       category.categoryImage = result.url;
     }
@@ -134,8 +150,7 @@ exports.deleteCategory = async (req, res) => {
     }
     await cloudinary.uploader.destroy(category.cloudinaryImagePath);
     await Category.deleteMany({ parentId: req.params.id });
-    /* TODO Remove products withing a category */
-    // await Product.deleteMany({ category: req.params.id });
+    await Product.deleteMany({ category: req.params.id });
     return res.status(200).json({
       isSuccess: true,
       message: CAREGORY_NOTIFICATIONS.CRUD.SUCCESS.CAREGORY_DELETE_SUCCESS,

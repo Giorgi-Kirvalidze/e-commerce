@@ -44,7 +44,12 @@ const productSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    productImages: [{ type: String }],
+    productImages: [
+      {
+        imgUrl: String,
+        cloudinaryImagePath: String,
+      },
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

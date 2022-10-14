@@ -2,7 +2,7 @@ const Product = require("../models/schemas/Product");
 const slugify = require("slugify");
 const { COMMON_NOTIFICATIONS } = require("../constants/commonConstants");
 
-exports.createProduct = async (req, res) => {
+exports.addProduct = async (req, res) => {
   const productObj = {
     ...req.body,
     slug: slugify(req.body.name),

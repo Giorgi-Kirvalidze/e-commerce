@@ -29,7 +29,7 @@ function _getFilesOverLimit(req) {
   } else {
     // Which files are over the limit?
     Object.keys(req.files).forEach((key) => {
-      if (files[key].size > FILE_SIZE_LIMIT) {
+      if (req.files[key].size > FILE_SIZE_LIMIT) {
         filesOverLimit.push(req.files[key].originalname);
       }
     });

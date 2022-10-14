@@ -2,3 +2,4 @@ node_modules
 dev.env
 prod.env
 package-lock.json
+src/uploads

@@ -44,7 +44,7 @@ const productSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    productPictures: [{ type: String }],
+    productImages: [{ type: String }],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

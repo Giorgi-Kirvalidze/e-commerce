@@ -1,5 +1,5 @@
 const {
-  createProduct,
+  addProduct,
   getProduct,
   updateProduct,
   deleteProduct,
@@ -8,6 +8,8 @@ const {
 const express = require("express");
 const { requireSignin, adminMiddleware } = require("../middlewares/auth");
 const router = express.Router();
+const fs = require("fs");
+const { v4: uuidv4 } = require("uuid");
 
 /* Multer setup */
 const multer = require("multer");
@@ -40,10 +42,10 @@ router.post(
   "/",
   requireSignin,
   adminMiddleware,
-  fileUpload.array("productPicture"),
+  fileUpload.array("productImages"),
   ProductAddSchema,
   fileValidators(_handleInvalidFileUpload),
-  createProduct
+  addProduct
 );
 router.get("/", requireSignin, listProducts);
 router.get("/:id", requireSignin, getProduct);

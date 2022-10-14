@@ -22,6 +22,7 @@ cloudinary.config({
 /* Importing routes */
 const userRoutes = require("./routes/user");
 const categoryRoutes = require("./routes/category");
+const productRoutes = require("./routes/product");
 
 /* Handling cors */
 app.use((_, res, next) => {
@@ -44,6 +45,7 @@ app.set("view engine", "ejs");
 app.get("/", (_, res) => res.status(200).send({ message: "server running" }));
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);
 
 /* listening to 5000 */
 const PORT = process.env.PORT || 5000;

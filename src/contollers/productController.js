@@ -1,25 +1,26 @@
-const Product = require("../models/Product");
+const Product = require("../models/schemas/Product");
 const slugify = require("slugify");
+const { COMMON_NOTIFICATIONS } = require("../constants/commonConstants");
 
 exports.createProduct = async (req, res) => {
-  let productPictures = [];
-  if (req.files.length > 0) {
-    productPictures = req.files.map((file) => {
-      return { img: file.filename };
-    });
-  }
-
-  const product = new Product({
+  const productObj = {
     ...req.body,
     slug: slugify(req.body.name),
+    sku: req.body.size
+      ? slugify(req.body.name) + "-" + req.body.size
+      : slugify(req.body.name),
     createdBy: req.user._id,
-    productPictures,
-  });
+  };
+  const product = new Product(productObj);
   try {
     const newProduct = await product.save();
-    return res.status(201).json(newProduct);
+    return res.status(201).json({
+      isSuccess: true,
+      message: "Product add success",
+      payload: { newProduct },
+    });
   } catch (e) {
-    return res.status(400).json(e);
+    return res.status(400).json({ isSuccess: false, message: e.message });
   }
 };
 
@@ -29,7 +30,7 @@ exports.getProduct = async (req, res) => {
     if (!product)
       return res
         .status(400)
-        .json({ message: "No products associated with that id" });
+        .json({ message: COMMON_NOTIFICATIONS.FAILURE.RESOURCE_NOT_FOUND });
     return res.send(product);
   } catch (e) {
     return res.status(400).json(e);
@@ -47,15 +48,21 @@ exports.listProducts = async (req, res) => {
     }
   }
   try {
-    let products = await Product.find()
+    const products = await Product.find()
       .limit(limit)
       .skip(page * limit);
     if (!products) {
-      return res.status(400).json({ message: "No products in the database" });
+      return res
+        .status(400)
+        .json({ message: COMMON_NOTIFICATIONS.FAILURE.RESOURCE_NOT_FOUND });
     }
-    res.status(200).send(products);
+    res.status(200).send({
+      isSuccess: true,
+      message: "Products get success",
+      payload: { products },
+    });
   } catch (e) {
-    return res.status(500).send(e);
+    return res.status(500).send({ isSuccess: false, message: e.message });
   }
 };
 
@@ -76,11 +83,16 @@ exports.updateProduct = async (req, res) => {
 
 exports.deleteProduct = async (req, res) => {
   try {
-    await Product.findByIdAndRemove(req.params.id);
-    return res.status(204).json({ message: "Product deleted successfully." });
-  } catch (e) {
+    const product = await Product.findByIdAndRemove(req.params.id);
+    if (!product) {
+      return res
+        .status(404)
+        .send({ message: COMMON_NOTIFICATIONS.FAILURE.RESOURCE_NOT_FOUND });
+    }
     return res
-      .status(500)
-      .json({ message: "No product associated with that id." });
+      .status(200)
+      .json({ isSuccess: true, message: "Product delete success." });
+  } catch (e) {
+    return res.status(500).json({ isSuccess: false, message: e.message });
   }
 };

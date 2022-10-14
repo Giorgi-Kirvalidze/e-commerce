@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const slugify = require("slugify");
+const { DecimalField } = require("../helpers");
 
 const productSchema = new mongoose.Schema(
   {
@@ -7,10 +9,7 @@ const productSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    price: {
-      type: Number,
-      required: true,
-    },
+    price: DecimalField,
     size: {
       type: String,
     },
@@ -45,14 +44,22 @@ const productSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    productPictures: [{ img: { type: String } }],
+    productPictures: [{ type: String }],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { getters: true } }
 );
+
+productSchema.pre("save", async function (next) {
+  const product = this;
+  if (product.isModified("name")) {
+    product.slug = slugify(product.name);
+  }
+  next();
+});
 
 module.exports = mongoose.model("Product", productSchema);

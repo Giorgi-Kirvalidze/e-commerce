@@ -20,6 +20,9 @@ function _uploadToCloudinary(file) {
   });
 }
 
+/* TODO update has a bug, cause we are adding req,file.paths.
+ so it is a new files,  document is correctly updated,
+  but we need to use existing cloudImagePath, to replace files in cloudinary */
 exports.uploadToCloudinary = async (req, res, clearLocalFolderPath) => {
   let res_promises = req.file
     ? [_uploadToCloudinary(req.file)]

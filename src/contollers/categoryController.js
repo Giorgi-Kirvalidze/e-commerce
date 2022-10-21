@@ -51,10 +51,10 @@ exports.addCategory = async (req, res) => {
       });
     }
     if (req.file) {
-      const locaFilePath = req.file.path;
-      const cloudinaryImagePath = locaFilePath;
+      const localFilePath = req.file.path;
+      const cloudinaryImagePath = localFilePath;
       const result = await uploadToCloudinary(
-        locaFilePath,
+        localFilePath,
         cloudinaryImagePath
       );
       if (!result.isSuccess) {

@@ -13,7 +13,10 @@ const { v4: uuidv4 } = require("uuid");
 
 /* Multer setup */
 const multer = require("multer");
-const { ProductAddSchema } = require("../middlewares/joi/product-schema");
+const {
+  ProductAddSchema,
+  ProductUpdateSchema,
+} = require("../middlewares/joi/product-schema");
 const { fileValidators } = require("../middlewares/file-uploader");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -49,7 +52,15 @@ router.post(
 );
 router.get("/", requireSignin, listProducts);
 router.get("/:id", requireSignin, getProduct);
-router.patch("/:id", requireSignin, adminMiddleware, updateProduct);
+router.patch(
+  "/:id",
+  requireSignin,
+  adminMiddleware,
+  fileUpload.array("productImages"),
+  ProductUpdateSchema,
+  fileValidators(_handleInvalidFileUpload),
+  updateProduct
+);
 router.delete("/:id", requireSignin, adminMiddleware, deleteProduct);
 
 module.exports = router;

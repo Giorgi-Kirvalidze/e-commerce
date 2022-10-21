@@ -14,24 +14,26 @@ exports.addProduct = async (req, res) => {
     createdBy: req.user._id,
   };
 
-  const productImageurls = [];
-  const productImages = req.files;
-
-  if (productImages) {
-    for (const file of productImages) {
-      const { path } = file;
-      const result = await uploadToCloudinary(path, path);
-
-      /* TODO if one upload fails remove other uploads too */
-      if (!result.isSuccess) {
-        return res
-          .status(500)
-          .send({ isSuccess: false, message: "product upload failed." });
-      }
-      productImageurls.push({ imgUrl: result.url, cloudinaryImagePath: path });
-    }
+  const productExists = await Product.findOne({
+    slug: slugify(req.body.name),
+  });
+  if (productExists) {
     fs.rmSync("uploads/productImages", { recursive: true, force: true });
-    productObj.productImages = productImageurls;
+    return res.status(400).json({
+      isSuccess: false,
+      message: "Product already exists",
+    });
+  }
+
+  if (req.files) {
+    const response = await uploadToCloudinary(
+      req,
+      res,
+      "uploads/productImages"
+    );
+    if (response.isSuccess) {
+      productObj.productImages = response.result;
+    }
   }
 
   const product = new Product(productObj);
@@ -89,18 +91,46 @@ exports.listProducts = async (req, res) => {
   }
 };
 
+/*TODO we need to handle case when user uploads 5 images,
+ then reuploads 4 and then removes 1, 
+ we update product document, so new product object contains 4 images,
+ but 1 image stays in cloudinaty */
 exports.updateProduct = async (req, res) => {
-  try {
-    const updates = Object.keys(req.body);
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).send({});
+  const updates = Object.keys(req.body);
+  const product = await Product.findById(req.params.id);
+  if (!product) {
+    return res.status(404).json({
+      isSuccess: false,
+      message: "Resource not found",
+    });
+  }
+  updates.forEach((update) => {
+    if (product[update] !== "productImages") {
+      return (product[update] = req.body[update]);
     }
-    updates.forEach((update) => (product[update] = req.body[update]));
+  });
+  if (req.files) {
+    const response = await uploadToCloudinary(
+      req,
+      res,
+      "uploads/productImages"
+    );
+    if (!response.isSuccess) {
+      return res
+        .status(500)
+        .send({ isSuccess: false, message: "category image upload failed." });
+    }
+    product.productImages = response.result;
+  }
+  try {
     const updatedProduct = await product.save();
-    return res.send(updatedProduct);
+    return res.status(200).json({
+      isSuccess: true,
+      message: "Product update success",
+      payload: { updatedProduct },
+    });
   } catch (e) {
-    res.status(400).send(e);
+    return res.status(400).send({ isSuccess: false, message: e.message });
   }
 };
 

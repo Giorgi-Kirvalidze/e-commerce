@@ -5,7 +5,7 @@ const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
 const { CAREGORY_NOTIFICATIONS } = require("../constants/categoryConstants");
 const { COMMON_NOTIFICATIONS } = require("../constants/commonConstants");
-const { uploadToCloudinary } = require("../middlewares/cloudinary/cloudinary");
+const { uploadSingleFile } = require("../middlewares/cloudinary/cloudinary");
 
 function createCategories(categories, parentId = null) {
   const categoryList = [];
@@ -50,9 +50,8 @@ exports.addCategory = async (req, res) => {
     });
   }
   if (req.file) {
-    const response = await uploadToCloudinary(
+    const response = await uploadSingleFile(
       req.file,
-      res,
       CAREGORY_NOTIFICATIONS.FILE_UPLOADS.CATEGORY_IMAGE_LOCAL_FOLDER_PATH
     );
     if (!response.isSuccess) {
@@ -60,8 +59,8 @@ exports.addCategory = async (req, res) => {
         .status(500)
         .send({ isSuccess: false, message: "category image upload failed." });
     }
-    categoryObj.cloudinaryImagePath = response.result[0].cloudinaryImagePath;
-    categoryObj.categoryImage = response.result[0].imgUrl;
+    categoryObj.cloudinaryImagePath = response.result.cloudinaryImagePath;
+    categoryObj.categoryImage = response.result.imgUrl;
   }
   try {
     const category = new Category(categoryObj);
@@ -88,37 +87,49 @@ exports.listCategories = async (req, res) => {
 
 exports.updateCategory = async (req, res) => {
   const updates = Object.keys(req.body);
-  const category = await Category.findById(req.params.id);
-  if (!category) {
+
+  const categoryToBeUpdated = await Category.findById(req.params.id);
+  if (!categoryToBeUpdated) {
     return res.status(404).json({
       isSuccess: false,
       message: COMMON_NOTIFICATIONS.FAILURE.RESOURCE_NOT_FOUND,
     });
   }
+  const findCategoryByName = await Category.findOne({ name: req.body.name });
+
+  if (findCategoryByName) {
+    if (categoryToBeUpdated._id !== findCategoryByName._id) {
+      return res.status(400).json({
+        isSuccess: false,
+        message: CAREGORY_NOTIFICATIONS.CRUD.FAILURE.CATEGORY_ALREADY_EXISTS,
+      });
+    }
+  }
+
   updates.forEach((update) => {
     if (
-      category[update] !==
+      categoryToBeUpdated[update] !==
       CAREGORY_NOTIFICATIONS.FILE_UPLOADS.CATEGORY_IMAGE_FORMCONTROL_NAME
     ) {
-      return (category[update] = req.body[update]);
+      return (categoryToBeUpdated[update] = req.body[update]);
     }
   });
 
   if (req.file) {
-    const response = await uploadToCloudinary(
+    const response = await uploadSingleFile(
       req.file,
-      res,
-      CAREGORY_NOTIFICATIONS.FILE_UPLOADS.CATEGORY_IMAGE_LOCAL_FOLDER_PATH
+      CAREGORY_NOTIFICATIONS.FILE_UPLOADS.CATEGORY_IMAGE_LOCAL_FOLDER_PATH,
+      categoryToBeUpdated.cloudinaryImagePath
     );
     if (!response.isSuccess) {
       return res
         .status(500)
         .send({ isSuccess: false, message: "category image upload failed." });
     }
-    category.categoryImage = response.result[0].imgUrl;
+    categoryToBeUpdated.categoryImage = response.result.imgUrl;
   }
   try {
-    const updatedCategory = await category.save();
+    const updatedCategory = await categoryToBeUpdated.save();
 
     return res.status(200).json({
       isSuccess: true,

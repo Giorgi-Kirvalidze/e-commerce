@@ -27,7 +27,7 @@ exports.addProduct = async (req, res) => {
 
   if (req.files) {
     const response = await uploadToCloudinary(
-      req,
+      req.files,
       res,
       "uploads/productImages"
     );
@@ -111,7 +111,7 @@ exports.updateProduct = async (req, res) => {
   });
   if (req.files) {
     const response = await uploadToCloudinary(
-      req,
+      req.files,
       res,
       "uploads/productImages"
     );

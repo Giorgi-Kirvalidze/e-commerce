@@ -51,7 +51,7 @@ exports.addCategory = async (req, res) => {
   }
   if (req.file) {
     const response = await uploadToCloudinary(
-      req,
+      req.file,
       res,
       CAREGORY_NOTIFICATIONS.FILE_UPLOADS.CATEGORY_IMAGE_LOCAL_FOLDER_PATH
     );
@@ -105,17 +105,17 @@ exports.updateCategory = async (req, res) => {
   });
 
   if (req.file) {
-    const result = await uploadToCloudinary(
-      req,
+    const response = await uploadToCloudinary(
+      req.file,
       res,
       CAREGORY_NOTIFICATIONS.FILE_UPLOADS.CATEGORY_IMAGE_LOCAL_FOLDER_PATH
     );
-    if (!result.isSuccess) {
+    if (!response.isSuccess) {
       return res
         .status(500)
         .send({ isSuccess: false, message: "category image upload failed." });
     }
-    category.categoryImage = result[0].url;
+    category.categoryImage = response.result[0].imgUrl;
   }
   try {
     const updatedCategory = await category.save();

@@ -4,6 +4,10 @@ const { DecimalField } = require("../helpers");
 
 const productSchema = new mongoose.Schema(
   {
+    _id: {
+      type: String,
+      required: true,
+    },
     name: {
       type: String,
       required: true,
@@ -56,7 +60,7 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true, toJSON: { getters: true } }
+  { timestamps: true, toJSON: { getters: true }, _id: false }
 );
 
 productSchema.pre("save", async function (next) {

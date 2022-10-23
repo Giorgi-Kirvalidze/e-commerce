@@ -18,6 +18,7 @@ const {
   ProductUpdateSchema,
 } = require("../middlewares/joi/product-schema");
 const { fileValidators } = require("../middlewares/file-uploader");
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const path = `./uploads/productImages`;

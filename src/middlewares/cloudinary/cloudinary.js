@@ -34,40 +34,45 @@ exports.uploadSingleFile = async (
       result,
       isSuccess: true,
     }))
-    .catch((error) => {
-      return res.status(500).json({
-        isSuccess: false,
-        message: "Error while uploading images",
-      });
-    })
+    .catch(() => ({
+      isSuccess: false,
+      message: "Error while uploading file",
+    }))
     .finally(() => {
       fs.rmSync(clearLocalFolderPath, { recursive: true, force: true });
     });
 };
 
-/* TODO update has a bug, cause we are adding req,file.paths.
- so it is a new files,  document is correctly updated,
-  but we need to use existing cloudImagePath, to replace files in cloudinary */
 exports.uploadMultipleFile = async (
-  files,
-  clearLocalFolderPath,
-  cloudinaryImagePath,
-  res
+  newfiles,
+  toFolderPath,
+  isUpdate = false
 ) => {
-  let res_promises = files.map((file) => _uploadToCloudinary(file));
+  let res_promises = null;
+  if (!isUpdate) {
+    res_promises = newfiles.map((file) =>
+      _uploadToCloudinary(file, toFolderPath + "/" + file.filename)
+    );
+  } else {
+    await cloudinary.api.delete_resources_by_prefix(toFolderPath).then(() => {
+      res_promises = newfiles.map((file) =>
+        _uploadToCloudinary(file, toFolderPath + "/" + file.filename)
+      );
+    });
+  }
 
   return await Promise.all(res_promises)
     .then((result) => ({
       result,
       isSuccess: true,
     }))
-    .catch((error) => {
-      return res.status(500).json({
+    .catch(() => {
+      return {
         isSuccess: false,
-        message: "Error while uploading images",
-      });
+        message: "Error while uploading file",
+      };
     })
     .finally(() => {
-      fs.rmSync(clearLocalFolderPath, { recursive: true, force: true });
+      fs.rmSync(newfiles[0].destination, { recursive: true, force: true });
     });
 };

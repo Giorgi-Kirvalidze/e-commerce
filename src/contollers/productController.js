@@ -1,7 +1,8 @@
 const Product = require("../models/schemas/Product");
 const slugify = require("slugify");
 const { COMMON_NOTIFICATIONS } = require("../constants/commonConstants");
-const { uploadToCloudinary } = require("../middlewares/cloudinary/cloudinary");
+const { uploadMultipleFile } = require("../middlewares/cloudinary/cloudinary");
+const { v4: uuidv4 } = require("uuid");
 const fs = require("fs");
 
 exports.addProduct = async (req, res) => {
@@ -12,6 +13,7 @@ exports.addProduct = async (req, res) => {
       ? slugify(req.body.name) + "-" + req.body.size
       : slugify(req.body.name),
     createdBy: req.user._id,
+    _id: uuidv4(),
   };
 
   const productExists = await Product.findOne({
@@ -24,12 +26,10 @@ exports.addProduct = async (req, res) => {
       message: "Product already exists",
     });
   }
-
   if (req.files) {
-    const response = await uploadToCloudinary(
+    const response = await uploadMultipleFile(
       req.files,
-      res,
-      "uploads/productImages"
+      `uploads/productImages/${req.body.category}/${productObj._id}`
     );
     if (response.isSuccess) {
       productObj.productImages = response.result;
@@ -91,10 +91,6 @@ exports.listProducts = async (req, res) => {
   }
 };
 
-/*TODO we need to handle case when user uploads 5 images,
- then reuploads 4 and then removes 1, 
- we update product document, so new product object contains 4 images,
- but 1 image stays in cloudinaty */
 exports.updateProduct = async (req, res) => {
   const updates = Object.keys(req.body);
   const product = await Product.findById(req.params.id);
@@ -110,10 +106,10 @@ exports.updateProduct = async (req, res) => {
     }
   });
   if (req.files) {
-    const response = await uploadToCloudinary(
+    const response = await uploadMultipleFile(
       req.files,
-      res,
-      "uploads/productImages"
+      `uploads/productImages/${req.body.category}/${product._id}`,
+      true
     );
     if (!response.isSuccess) {
       return res

@@ -76,3 +76,11 @@ exports.uploadMultipleFile = async (
       fs.rmSync(newfiles[0].destination, { recursive: true, force: true });
     });
 };
+
+exports.deleteFolderOnCloudinary = async (folderPath) => {
+  /* need to delete files withing a folder first, then folder as Cloudinary suggets */
+  await Promise.all([
+    cloudinary.api.delete_resources_by_prefix(folderPath),
+    cloudinary.api.delete_folder(folderPath),
+  ]);
+};

@@ -1,7 +1,10 @@
 const Product = require("../models/schemas/Product");
 const slugify = require("slugify");
 const { COMMON_NOTIFICATIONS } = require("../constants/commonConstants");
-const { uploadMultipleFile } = require("../middlewares/cloudinary/cloudinary");
+const {
+  uploadMultipleFile,
+  deleteFolderOnCloudinary,
+} = require("../middlewares/cloudinary/cloudinary");
 const { v4: uuidv4 } = require("uuid");
 const fs = require("fs");
 
@@ -138,10 +141,14 @@ exports.deleteProduct = async (req, res) => {
         .status(404)
         .send({ message: COMMON_NOTIFICATIONS.FAILURE.RESOURCE_NOT_FOUND });
     }
+    await deleteFolderOnCloudinary(
+      `uploads/productImages/${product.category}/${product._id}`
+    );
     return res
       .status(200)
       .json({ isSuccess: true, message: "Product delete success." });
   } catch (e) {
+    console.log(e);
     return res.status(500).json({ isSuccess: false, message: e.message });
   }
 };

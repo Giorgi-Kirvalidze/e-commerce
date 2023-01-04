@@ -1,5 +1,5 @@
 node_modules
-dev.env
+src/dev.env
 prod.env
 package-lock.json
 src/uploads

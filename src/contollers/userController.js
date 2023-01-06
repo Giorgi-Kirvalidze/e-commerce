@@ -77,9 +77,6 @@ exports.signin = async (req, res) => {
 // TODO req.logout is not a function err && req.session clearing Error
 exports.signout = async (req, res) => {
   try {
-    // remove the req.user property and clear the login session
-    // but it says is logout is not a function
-    req.logout();
     // redirect to homepage
     res.redirect("/");
   } catch (e) {
